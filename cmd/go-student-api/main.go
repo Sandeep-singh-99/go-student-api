@@ -12,19 +12,27 @@ import (
 	"time"
 
 	"github.com/Sandeep-singh-99/go-student-api/internal/config"
+	"github.com/Sandeep-singh-99/go-student-api/internal/http/handlers/student"
+	"github.com/Sandeep-singh-99/go-student-api/internal/storage/sqlite"
 )
 
 func main() {
 	// load the configuration
 	config := config.MustLoad()
 
+	storage, err := sqlite.New(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("storage initialized", slog.String("env", config.Env), slog.String("version", "1.0.0"))
+
 	// setup router
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to the Go Student API!"))
-
-	})
+	router.HandleFunc("POST /api/students", student.New(storage))
+	router.HandleFunc("GET /api/students/{id}", student.GetById(storage))
+	router.HandleFunc("GET /api/students", student.GetList(storage))
 
 	// setup server
 
